@@ -19,9 +19,10 @@ def timeGenerator(sample_rate):
 for i in range(antalBølger):
     signal.append(waveGenerater(random.randint(1, 5), random.randint(1, 5), random.randint(1, 5), random.randint(1, 5), timeGenerator(sample_rate)))
 
-    print(signal[i])
-
     combindeWave = np.sum(signal, axis=0)
+
+print(timeGenerator(sample_rate))
+print(waveGenerater(1, 1, 1, 1, timeGenerator(sample_rate)))
 
 plt.plot(timeGenerator(sample_rate), combindeWave, label='combindeWave')
 plt.legend()
