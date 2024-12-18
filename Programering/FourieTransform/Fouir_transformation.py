@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-sample_rate = 220
+sample_rate = 50
 
 numberOfWaves = 3
 frequencyArray = [random.randint(1, 100) for _ in range(numberOfWaves)]
@@ -16,7 +16,7 @@ def timeGenerator(sample_rate):
 
     return t
 
-def waveGenerater(amplitude, vinkelfrekvens, faseforskydning, k, t):
+def waveGenerator(amplitude, vinkelfrekvens, faseforskydning, k, t):
 
     # Generate the f(t) values for each time value in the array
     f = (amplitude * np.sin(vinkelfrekvens * t + faseforskydning) + k)
@@ -61,7 +61,7 @@ def combindeWave(numberOfWaves, frequencyArray, t):
     for i in range(numberOfWaves):
         
         # Generate the wave
-        signal.append(waveGenerater(1, frequencyArray[i], 0, 0, t))
+        signal.append(waveGenerator(1, frequencyArray[i], 0, 0, t))
 
     # Combine the waves
     combindeWave = np.sum(signal, axis=0)
@@ -81,10 +81,11 @@ f = combindeWave(numberOfWaves, frequencyArray, t)
 # Compute the DFT of the signal
 F = DFT(f)
 
-print(F)
+#print(F)
 
 # Compute the frequencies corresponding to the DFT values
 frequencies = np.fft.fftfreq(len(f), d=(t[1] - t[0]) / (2 * np.pi))
+
 
 # Only keep the positive frequencies
 positive_frequencies = frequencies[:len(frequencies) // 2]
