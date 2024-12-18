@@ -30,9 +30,16 @@ To customize the signal parameters, you need to modify the `signalProperties` va
 * Phase (phi)
 * Offset (k)
 
+```sh
+#Input signal properties
+signalProperties = [[a, f, phi, k]], # Amplitude, frequency, phase, off-set                        
+```
+
 For example:
 
 ```sh
 #Input signal properties
-signalProperties = [[a, f, phi, k]], # Amplitude, frequency, phase, off-set                        
+signalProperties = [    [1, 200000, 0, 0], # Amplitude, frequency, phase, off-set
+                        [1, 1000, 0, 0],
+                        [1, 120000, 0, 0]]
 ```
