@@ -1,28 +1,59 @@
+# ---------------------------------------
+# Description: This code generates a signal with a given number of sin waves and plots the signal in the time domain 
+# and its Discrete Fourier Transform (DFT) in the frequency domain.
+# ---------------------------------------
+
 import numpy as np
 import matplotlib.pyplot as plt
-import random
+import datetime
 
-sample_rate = 50
 
-numberOfWaves = 3
-frequencyArray = [random.randint(1, 100) for _ in range(numberOfWaves)]
+# Functions ---------------------------------------
 
-print(frequencyArray)
-
-def timeGenerator(sample_rate):
-    # Generate an array of time values from 0 to 2*pi, the sample rate is the number of samples in the array
+def timeGenerator(signalProperties):
+    # Generate an array of time values
+    # Generated to match two periods of the lowest frequency in the signal (longest duration in time)
+    # Number of samples are calculated to fullfill Nyquist sampling criteria
     
-    t = np.linspace(0, 2 * np.pi, sample_rate)
+    frequencyArray = [] # Temp array to store the frequencies in the signal
+
+    for row in range(len(signalProperties)):
+        frequencyArray.append(signalProperties[row][1]) # Add the frequency of each wave to the array
+
+    lowestFrequency = min(frequencyArray) # Find the lowest frequency in the signal
+    highestFrequency = max(frequencyArray) # Find the highest frequency in the signal
+    minSamplingFrequency = 2 * highestFrequency # Sampling frequency must be at least twice the highest frequency in the signal
+    numberOfSamples = 10*int(minSamplingFrequency / lowestFrequency) # Number of samples in the signal - The factor 10 is added to make smmoth plots
+
+    print(f"Signal frequencies: {frequencyArray}")
+    print(f"Lowest frequency: {lowestFrequency}")
+    print(f"Highest frequency: {highestFrequency}")
+    print(f"Minimum sampling frequency: {minSamplingFrequency}")
+    print(f"Number of samples: {numberOfSamples}")
+
+    t = np.linspace(0, 2* 1/lowestFrequency, numberOfSamples)
 
     return t
 
-def waveGenerator(amplitude, vinkelfrekvens, faseforskydning, k, t):
+def frequencyGenerator(timeDomainAxis):
+    # Generate an array of frequencies corresponding to the time domain
+    
+    sampleTime = timeDomainAxis[1] - timeDomainAxis[0]
 
-    # Generate the f(t) values for each time value in the array
-    f = (amplitude * np.sin(vinkelfrekvens * t + faseforskydning) + k)
+    print(f"Actual sampling frequency: {int(1/sampleTime)}")
+    
+    f = np.fft.fftfreq(len(timeDomainAxis), d=(sampleTime)) # Compute the frequencies corresponding to the time values
 
-    # Return the array of t, and f(t)
     return f
+
+def waveGenerator(a, f, phi, k, t):
+    # API: a: amplitude, f: frequency, phi: phase, k: off-set, t: time array
+
+    omega = 2 * np.pi * f # Angular frequency
+    sineWave = (a * np.sin(omega * t + phi) + k) # Generate the f(t) values for each time value in the array
+
+    # Return the array of the sine wave
+    return sineWave
 
 def DFT(f):
     
@@ -48,65 +79,67 @@ def DFT(f):
             X_k += f[n] * e
 
         # Append the frequency to the list of frequencies
-        F.append(X_k)
+        F.append(X_k/(N/2))
 
     # Return the list of frequencies
     return np.array(F)
 
-def combindeWave(numberOfWaves, frequencyArray, t):
+def combineWave(signalProperties, t):
     # Stores the combined wave
-    signal = []
+    signal = np.zeros_like(t)
 
     # Iterate through the number of waves
-    for i in range(numberOfWaves):
-        
-        # Generate the wave
-        signal.append(waveGenerator(1, frequencyArray[i], 0, 0, t))
+    for row in range(len(signalProperties)):
+        signal = signal + waveGenerator(signalProperties[row][0], signalProperties[row][1], signalProperties[row][2], signalProperties[row][3], t)
+       
+    return signal
 
-    # Combine the waves
-    combindeWave = np.sum(signal, axis=0)
+def plotWave(t, f, frequencies, F):
+    # Plot the original signal and its DFT positive frequencies
+     
+    # Define the figure and the subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+    
+    # Plot the time domain signal
+    ax1.plot(t, f)
+    ax1.set_title('Time Domain Signal')
+    ax1.set_xlabel('Time')
+    ax1.set_ylabel('Amplitude')
+   
 
-    # Return the combined wave
-    return combindeWave
+    # Only keep the positive frequencies
+    positive_frequencies = frequencies[:len(frequencies) // 2]
+    positive_F = F[:len(F) // 2]
 
+    # Plot the DFT of the signal
+    ax2.plot(positive_frequencies, np.abs(positive_F))
+    ax2.set_title('Discrete Fourier Transform (DFT)')
+    ax2.set_xlabel('Frequency')
+    ax2.set_ylabel('Magnitude')
 
-
-
-# Generate the time so all the waves are in the same time frame
-t = timeGenerator(sample_rate)
-
-f = combindeWave(numberOfWaves, frequencyArray, t)
-
-
-# Compute the DFT of the signal
-F = DFT(f)
-
-#print(F)
-
-# Compute the frequencies corresponding to the DFT values
-frequencies = np.fft.fftfreq(len(f), d=(t[1] - t[0]) / (2 * np.pi))
-
-
-# Only keep the positive frequencies
-positive_frequencies = frequencies[:len(frequencies) // 2]
-positive_F = F[:len(F) // 2]
-
-
-# Plot the original signal and its DFT
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-
-# Plot the original signal
-ax1.plot(t, f)
-ax1.set_title('Original Signal')
-ax1.set_xlabel('Time')
-ax1.set_ylabel('Amplitude')
-
-# Plot the DFT of the signal
-ax2.plot(positive_frequencies, np.abs(positive_F))
-ax2.set_title('Discrete Fourier Transform (DFT)')
-ax2.set_xlabel('Frequency')
-ax2.set_ylabel('Magnitude')
+    # Display the plot
+    plt.tight_layout()
+    plt.show()
 
 
-plt.tight_layout()
-plt.show()
+
+# Main code ---------------------------------------
+print("-------------------------------------------------")
+print(f"BEGIN:{__file__} @ {datetime.datetime.now()}")
+
+#Input signal properties
+signalProperties = [    [1, 200000, 0, 0], # Amplitude, frequency, phase, off-set
+                        [1, 1000, 0, 0],
+                        [1, 120000, 0, 0]]
+
+
+# Time Domain Signal
+t = timeGenerator(signalProperties)
+signals = combineWave(signalProperties, t)
+
+# Frequency Domain Signal
+f = frequencyGenerator(t)
+DFT_signals = DFT(signals)
+
+# Plot the signals
+plotWave(t, signals, f, DFT_signals)
